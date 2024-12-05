@@ -1,4 +1,4 @@
-import Example from './components/Example'
+import RidgelinePlot from './components/RidgelinePlot';
 import Notes from './components/Notes'
 import { NotesWithReducer, CountProvider } from './components/NotesWithReducer';
 import Grid from '@mui/material/Grid';
@@ -20,17 +20,23 @@ const theme = createTheme({
 // For how Grid works, refer to https://mui.com/material-ui/react-grid/
 
 function Layout() {
+  // Define the onSelectPosition function
+  const handleSelectPosition = (position: string) => {
+    console.log("Selected position:", position); // Handle the position selection here
+  };
+
   return (
-    <Grid container spacing={1} direction='column' id="main-container">
+    <Grid container spacing={1} direction="column" id="main-container">
       <Grid container item xs={6} sm={6} md={6} lg={6}>
         <Grid item xs={5} sm={5} md={5} lg={5}>
-          <Example />
+          {/* Pass the required prop to RidgelinePlot */}
+          <RidgelinePlot onSelectPosition={handleSelectPosition} />
         </Grid>
-        <Grid item xs sm md lg/>
+        <Grid item xs sm md lg />
       </Grid>
       <Grid item xs sm md lg>
         {
-        <Notes msg={"This is a message sent from App.tsx as component prop"} />
+          <Notes msg={"This is a message sent from App.tsx as component prop"} />
         }
         { // Uncomment the following to see how state management works in React.
         /*
@@ -40,8 +46,10 @@ function Layout() {
         }
       </Grid>
     </Grid>
-  )
+  );
 }
+
+
 
 function App() {
   return (
