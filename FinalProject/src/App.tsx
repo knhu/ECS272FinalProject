@@ -1,62 +1,52 @@
+import React, { useState } from 'react';
 import RidgelinePlot from './components/RidgelinePlot';
-import Notes from './components/Notes'
-import { NotesWithReducer, CountProvider } from './components/NotesWithReducer';
-import Grid from '@mui/material/Grid';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { grey } from '@mui/material/colors';
 
-// Adjust the color theme for material ui
-const theme = createTheme({
-  palette: {
-    primary:{
-      main: grey[700],
-    },
-    secondary:{
-      main: grey[700],
-    }
-  },
-})
-
-// For how Grid works, refer to https://mui.com/material-ui/react-grid/
-
-function Layout() {
-  // Define the onSelectPosition function
-  const handleSelectPosition = (position: string) => {
-    console.log("Selected position:", position); // Handle the position selection here
-  };
+function App() {
+  const [timeframe, setTimeframe] = useState<'weekly' | 'season'>('weekly'); // Weekly or Season
+  const [viewType, setViewType] = useState<'players' | 'teams'>('players'); // Players or Teams
 
   return (
-    <Grid container spacing={1} direction="column" id="main-container">
-      <Grid container item xs={6} sm={6} md={6} lg={6}>
-        <Grid item xs={5} sm={5} md={5} lg={5}>
-          {/* Pass the required prop to RidgelinePlot */}
-          <RidgelinePlot onSelectPosition={handleSelectPosition} />
-        </Grid>
-        <Grid item xs sm md lg />
-      </Grid>
-      <Grid item xs sm md lg>
-        {
-          <Notes msg={"This is a message sent from App.tsx as component prop"} />
-        }
-        { // Uncomment the following to see how state management works in React.
-        /*
-          <CountProvider>
-            <NotesWithReducer msg={"This is a message sent from App.tsx as component prop"} />
-          </CountProvider>*/
-        }
-      </Grid>
-    </Grid>
+    <div>
+      {/* Dropdowns for controlling the view */}
+      <div style={{ marginBottom: '20px' }}>
+        {/* Timeframe Dropdown */}
+        <label htmlFor="timeframe-select" style={{ marginRight: '10px' }}>
+          View By:
+        </label>
+        <select
+          id="timeframe-select"
+          value={timeframe}
+          onChange={(e) => setTimeframe(e.target.value as 'weekly' | 'season')}
+        >
+          <option value="weekly">Weekly</option>
+          <option value="season">Season</option>
+        </select>
+
+        {/* View Type Dropdown */}
+        <label htmlFor="viewtype-select" style={{ marginLeft: '20px', marginRight: '10px' }}>
+          View Type:
+        </label>
+        <select
+          id="viewtype-select"
+          value={viewType}
+          onChange={(e) => setViewType(e.target.value as 'players' | 'teams')}
+        >
+          <option value="players">Players</option>
+          <option value="teams">Teams</option>
+        </select>
+      </div>
+
+      {/* Render the appropriate component based on `viewType` */}
+      {viewType === 'players' ? (
+        <RidgelinePlot timeframe={timeframe} onSelectPosition={(position) => console.log(`Selected: ${position}`)} />
+      ) : (
+        <div>
+          {/* Future TeamsRidgelinePlot Component */}
+          <p>Teams Ridge Plot will go here.</p>
+        </div>
+      )}
+    </div>
   );
 }
 
-
-
-function App() {
-  return (
-    <ThemeProvider theme={theme}>
-      <Layout />
-    </ThemeProvider>
-  )
-}
-
-export default App
+export default App;
