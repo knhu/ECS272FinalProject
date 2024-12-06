@@ -11,7 +11,7 @@ interface PlayerData {
 interface ScatterPlotProps {
   position: string;
   timeframe: "weekly" | "season";
-  onBack: () => void; // Added onBack prop
+  onBack: () => void;
 }
 
 interface PlayerNode extends d3.SimulationNodeDatum {
@@ -25,18 +25,17 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
 
   useEffect(() => {
     const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-    const width = 800 - margin.left - margin.right;
-    const height = 600 - margin.top - margin.bottom;
+    const width = 1600 - margin.left - margin.right;
+    const height = 1200 - margin.top - margin.bottom;
 
     const svg = d3
       .select(svgRef.current)
       .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .selectAll("*")
-      .remove(); // Clear previous content
+      .attr("height", height + margin.top + margin.bottom);
 
-    const g = d3
-      .select(svgRef.current)
+    svg.selectAll("*").remove(); // Clear previous content
+
+    const g = svg
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -65,11 +64,11 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
           })
         );
 
-        // Define scales
+        // Define initial scales
         const x = d3
           .scaleLinear()
           .domain([
-            d3.min(averagedData, (d) => d.avgFantasyPoints) || 0,
+            d3.min(averagedData, (d) => d.avgFantasyPoints) || -2,
             d3.max(averagedData, (d) => d.avgFantasyPoints) || 1,
           ])
           .range([0, width]);
@@ -77,31 +76,17 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
         const y = d3
           .scaleLinear()
           .domain([
-            d3.min(averagedData, (d) => d.avgDraftPick) || 0,
+            d3.min(averagedData, (d) => d.avgDraftPick) || -2,
             d3.max(averagedData, (d) => d.avgDraftPick) || 1,
           ])
           .range([height, 0]);
 
-        // Add axes
-        g.append("g")
+        const xAxis = g
+          .append("g")
           .attr("transform", `translate(0,${height})`)
           .call(d3.axisBottom(x));
 
-        g.append("g").call(d3.axisLeft(y));
-
-        // Add zoom functionality
-        const zoom = d3
-          .zoom<SVGSVGElement, unknown>()
-          .scaleExtent([1, 10]) // Zoom levels
-          .translateExtent([
-            [0, 0],
-            [width, height],
-          ]) // Translation limits
-          .on("zoom", (event) => {
-            g.attr("transform", event.transform);
-          });
-
-        d3.select(svgRef.current).call(zoom);
+        const yAxis = g.append("g").call(d3.axisLeft(y));
 
         // Tooltip
         const tooltip = d3
@@ -114,6 +99,35 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
           .style("padding", "5px")
           .style("border-radius", "5px")
           .style("font-size", "12px");
+
+        // Add circles for nodes
+        const updateNodes = (nodes: PlayerNode[]) => {
+          g.selectAll("circle")
+            .data(nodes)
+            .join("circle")
+            .attr("r", 5)
+            .attr("fill", "steelblue")
+            .attr("stroke", "black")
+            .attr("cx", (d) => d.x!)
+            .attr("cy", (d) => d.y!)
+            .on("mouseover", function (event, d) {
+              tooltip
+                .style("visibility", "visible")
+                .html(
+                  `Player: ${d.player_name}<br>Avg Points: ${d.avgFantasyPoints.toFixed(
+                    2
+                  )}<br>Avg Draft Pick: ${d.avgDraftPick.toFixed(2)}`
+                )
+                .style("top", `${event.pageY + 10}px`)
+                .style("left", `${event.pageX + 10}px`);
+            })
+            .on("mousemove", (event) => {
+              tooltip
+                .style("top", `${event.pageY + 10}px`)
+                .style("left", `${event.pageX + 10}px`);
+            })
+            .on("mouseout", () => tooltip.style("visibility", "hidden"));
+        };
 
         // Add force simulation
         const simulation = d3
@@ -134,33 +148,50 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
             d3.forceY<PlayerNode>((d) => y(d.avgDraftPick)).strength(0.7)
           )
           .force("collision", d3.forceCollide(5)) // Prevent overlap
-          .on("tick", () => {
-            g.selectAll("circle")
-              .data(simulation.nodes())
-              .join("circle")
-              .attr("r", 5)
-              .attr("fill", "steelblue")
-              .attr("stroke", "black")
-              .attr("cx", (d) => d.x!)
-              .attr("cy", (d) => d.y!)
-              .on("mouseover", function (event, d) {
-                tooltip
-                  .style("visibility", "visible")
-                  .html(
-                    `Player: ${d.player_name}<br>Avg Points: ${d.avgFantasyPoints.toFixed(
-                      2
-                    )}<br>Avg Draft Pick: ${d.avgDraftPick.toFixed(2)}`
-                  )
-                  .style("top", `${event.pageY + 10}px`)
-                  .style("left", `${event.pageX + 10}px`);
-              })
-              .on("mousemove", (event) => {
-                tooltip
-                  .style("top", `${event.pageY + 10}px`)
-                  .style("left", `${event.pageX + 10}px`);
-              })
-              .on("mouseout", () => tooltip.style("visibility", "hidden"));
+          .on("tick", () => updateNodes(simulation.nodes()));
+
+        // Zoom functionality
+        const zoom = d3
+          .zoom<SVGSVGElement, unknown>()
+          .scaleExtent([1, 10])
+          .translateExtent([
+            [0, 0],
+            [width, height],
+          ])
+          .on("zoom", (event) => {
+            const newTransform = event.transform;
+
+            // Rescale axes
+            const newX = newTransform.rescaleX(x);
+            const newY = newTransform.rescaleY(y);
+
+            xAxis.call(d3.axisBottom(newX));
+            yAxis.call(d3.axisLeft(newY));
+
+            // Update simulation forces with new scales
+            simulation
+              .force(
+                "x",
+                d3.forceX<PlayerNode>((d) => newX(d.avgFantasyPoints)).strength(
+                  0.7
+                )
+              )
+              .force(
+                "y",
+                d3.forceY<PlayerNode>((d) => newY(d.avgDraftPick)).strength(0.7)
+              )
+              .alpha(0.1) // Reset simulation to adjust nodes
+              .restart();
+
+            // Update circles
+            // Update circles
+g.selectAll<SVGCircleElement, PlayerNode>("circle")
+  .attr("cx", (d) => newX(d.avgFantasyPoints))
+  .attr("cy", (d) => newY(d.avgDraftPick));
+
           });
+
+        d3.select(svgRef.current).call(zoom);
       })
       .catch((error) => console.error("Error loading data:", error));
   }, [position, timeframe]);
