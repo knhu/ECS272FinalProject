@@ -44,6 +44,13 @@ This project is a **Player Performance Analysis Tool** designed to visualize and
   - Implements the scatter plot with force-directed physics.
   - Supports metric selection and interactive zoom/pan.
 
+- **`Layer3.tsx`**
+  - Framework for implementing the table and bar chart
+  - Supports selection of specific seasons and weeks
+
+- **`Table.tsx`**
+  - Table for showing player data for a specific player
+
 - **`Chart.tsx`**
   - Implements the bar chart.
   - Includes animations for bar transitions.
@@ -91,8 +98,10 @@ This project is a **Player Performance Analysis Tool** designed to visualize and
    - Select a Y-axis metric.
    - Zoom, pan, and click on players to view detailed stats.
 
-3. **Bar Chart:**
+3. **Table/Bar Chart:**
    - Select players and metrics for comparison.
-   - View tooltips for detailed scores.
+   - Single player selection will show a table
+   - Selecting multiple players will show a bar chart
+   - View tooltips on chart for detailed scores.
 
 ---
