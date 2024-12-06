@@ -18,6 +18,8 @@ interface ScatterPlotProps {
   position: string;
   timeframe: "weekly" | "season";
   onBack: () => void;
+  selectedPlayers?: string[]; // List of currently selected players
+  onPlayerSelect: (playerName: string) => void; // Callback for player selection
 }
 
 interface PlayerNode extends d3.SimulationNodeDatum {
@@ -40,10 +42,18 @@ const positionNames = {
   TE: "Tight End",
 };
 
-const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }) => {
+const ScatterPlot: React.FC<ScatterPlotProps> = ({
+  position,
+  timeframe,
+  onBack,
+  selectedPlayers,
+  onPlayerSelect,
+}) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const initialTransform = d3.zoomIdentity; // Initial zoom transform
-  const [selectedMetric, setSelectedMetric] = useState(positionMetrics[position][0]); // Default Y-axis metric
+  const [selectedMetric, setSelectedMetric] = useState(
+    positionMetrics[position][0]
+  ); // Default Y-axis metric
 
   useEffect(() => {
     const margin = { top: 40, right: 30, bottom: 50, left: 60 };
@@ -129,6 +139,20 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
 
         const yAxis = g.append("g").call(d3.axisLeft(y));
 
+        g.append("text")
+          .attr("text-anchor", "middle")
+          .attr("x", width / 2)
+          .attr("y", height + 50)
+          .style("font-size", "14px")
+          .text("Fantasy Points (PPR)");
+        g.append("text")
+          .attr("text-anchor", "middle")
+          .attr("transform", "rotate(-90)")
+          .attr("x", -height / 2)
+          .attr("y", -50)
+          .style("font-size", "14px")
+          .text(selectedMetric.replace("_", " ").toUpperCase());
+          
         // Tooltip
         const tooltip = d3
           .select("body")
@@ -147,7 +171,11 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
             .data(nodes)
             .join("circle")
             .attr("r", 5)
-            .attr("fill", "steelblue")
+            .attr("fill", (d) =>
+              selectedPlayers.includes(d.player_name)
+                ? "orange"
+                : "steelblue"
+            )
             .attr("stroke", "black")
             .attr("cx", (d) => d.x!)
             .attr("cy", (d) => d.y!)
@@ -167,7 +195,12 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
                 .style("top", `${event.pageY + 10}px`)
                 .style("left", `${event.pageX + 10}px`);
             })
-            .on("mouseout", () => tooltip.style("visibility", "hidden"));
+            .on("mouseout", () => tooltip.style("visibility", "hidden"))
+            .on("click", (event, d) => {
+  tooltip.style("visibility", "hidden"); // Hide the tooltip
+  onPlayerSelect(d.player_name); // Notify parent of selection change
+});
+
         };
 
         // Add force simulation
@@ -226,7 +259,7 @@ const ScatterPlot: React.FC<ScatterPlotProps> = ({ position, timeframe, onBack }
         });
       })
       .catch((error) => console.error("Error loading data:", error));
-  }, [position, timeframe, selectedMetric]);
+  }, [position, timeframe, selectedMetric, selectedPlayers]);
 
   return (
     <div>

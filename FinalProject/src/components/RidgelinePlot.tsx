@@ -116,22 +116,14 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
           .style("border-radius", "5px")
           .style("font-size", "12px");
 
-        svg
+        // Draw ridgelines with animation
+        const paths = svg
           .selectAll("areas")
           .data(allDensity)
           .enter()
           .append("path")
           .attr("transform", (d) => {
-            let basePosition;
-            if (timeframe === "weekly") {
-              basePosition = y(d.key)! + y.bandwidth() / 2;
-            } else if (timeframe === "season") {
-              basePosition = y(d.key)! + y.bandwidth() / 2;
-            }
-
-            console.log(
-              `Timeframe: ${timeframe}, Position: ${d.key}, BasePosition: ${basePosition}, Bandwidth: ${y.bandwidth()}`
-            );
+            const basePosition = y(d.key)! + y.bandwidth() / 2;
             return `translate(0,${basePosition})`;
           })
           .datum((d) => d.density)
@@ -140,12 +132,10 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
           .attr("stroke-width", 1)
           .attr(
             "d",
-            d3
-              .line<[number, number]>()
+            d3.line<[number, number]>()
               .curve(d3.curveBasis)
               .x((point) => x(point[0]))
-              .y((point) => -point[1] * Y_SCALING_FACTOR)
-              .defined((point) => point[1] !== 0)
+              .y(() => 0) // Start flat for animation
           )
           .on("mouseover", function (event, d) {
             tooltip.style("visibility", "visible");
@@ -170,19 +160,28 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
             tooltip.style("visibility", "hidden");
           })
           .on("click", (event, d) => {
-  const position = allDensity.find(
-    (density) => density.density === d
-  )?.key;
+            const position = allDensity.find(
+              (density) => density.density === d
+            )?.key;
 
-  // Hide tooltip explicitly
-  tooltip.style("visibility", "hidden");
+            tooltip.style("visibility", "hidden");
 
-  console.log(`Position clicked: ${position}`);
-  if (position) {
-    onSelectPosition(position); // Pass selected position to parent
-  }
-});
+            if (position) {
+              onSelectPosition(position);
+            }
+          });
 
+        // Animate ridgelines to final position
+        paths.transition()
+          .duration(1000)
+          .attr(
+            "d",
+            d3.line<[number, number]>()
+              .curve(d3.curveBasis)
+              .x((point) => x(point[0]))
+              .y((point) => -point[1] * Y_SCALING_FACTOR)
+              .defined((point) => point[1] !== 0)
+          );
       })
       .catch((error) => {
         console.error("Error loading data:", error);
