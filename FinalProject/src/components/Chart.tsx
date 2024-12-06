@@ -17,7 +17,7 @@ const positionNames: Record<string, string> = {
 
 // Metrics for each position
 const positionMetrics: Record<string, string[]> = {
-  QB: ["pass_attempts", "complete_pass", "passing_yards", "pass_td", "interceptions"],
+  QB: ["pass_attempts", "complete_pass", "passing_yards", "pass_td", "interception"],
   RB: ["rush_attempts", "rushing_yards", "run_td"],
   WR: ["targets", "receptions", "receiving_yards", "reception_td"],
   TE: ["targets", "receptions", "receiving_yards", "reception_td"],
