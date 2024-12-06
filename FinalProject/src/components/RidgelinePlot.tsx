@@ -22,7 +22,7 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
       : "Average Seasonal Fantasy Points Distribution";
 
   useEffect(() => {
-    const margin = { top: 60, right: 30, bottom: 50, left: 110 };
+    const margin = { top: 60, right: 30, bottom: 70, left: 110 };
     const width = 800 - margin.left - margin.right;
     const height = 600 - margin.top - margin.bottom;
 
@@ -36,7 +36,6 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Dynamically load the appropriate CSV based on the timeframe
     const csvFile =
       timeframe === "weekly"
         ? "../../data/weekly_player_data.csv"
@@ -54,7 +53,6 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
           return;
         }
 
-        // Extract unique positions and fantasy points
         const uniquePositions = Array.from(
           new Set(data.map((d) => d.position))
         );
@@ -69,7 +67,6 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
             .map((d) => d.fantasy_points_ppr),
         }));
 
-        // Set up scales
         const x = d3
           .scaleLinear()
           .domain([d3.min(fantasyPoints) || 0, d3.max(fantasyPoints) || 0])
@@ -83,7 +80,6 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
 
         const color = d3.scaleOrdinal(d3.schemeCategory10).domain(uniquePositions);
 
-        // Kernel Density Estimation (KDE)
         const kde = kernelDensityEstimator(
           kernelEpanechnikov(7),
           x.ticks(40)
@@ -101,10 +97,28 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
           .attr("transform", `translate(0,${height})`)
           .call(d3.axisBottom(x).ticks(5));
 
+        // Add X-axis title
+        svg
+          .append("text")
+          .attr("x", width / 2)
+          .attr("y", height + 50)
+          .attr("text-anchor", "middle")
+          .style("font-size", "12px")
+          .text("Fantasy Points (PPR)");
+
         // Add Y-axis
         svg.append("g").call(d3.axisLeft(y));
 
-        // Tooltip
+        // Add Y-axis title
+        svg
+          .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("x", -height / 2)
+          .attr("y", -70)
+          .attr("text-anchor", "middle")
+          .style("font-size", "12px")
+          .text("Position");
+
         const tooltip = d3
           .select("body")
           .append("div")
@@ -116,7 +130,6 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
           .style("border-radius", "5px")
           .style("font-size", "12px");
 
-        // Draw ridgelines with animation
         const paths = svg
           .selectAll("areas")
           .data(allDensity)
@@ -135,7 +148,7 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
             d3.line<[number, number]>()
               .curve(d3.curveBasis)
               .x((point) => x(point[0]))
-              .y(() => 0) // Start flat for animation
+              .y(() => 0)
           )
           .on("mouseover", function (event, d) {
             tooltip.style("visibility", "visible");
@@ -171,7 +184,6 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
             }
           });
 
-        // Animate ridgelines to final position
         paths.transition()
           .duration(1000)
           .attr(
