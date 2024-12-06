@@ -141,7 +141,7 @@ const Chart: React.FC<ChartProps> = ({ selectedPlayers, position, season, week }
     svg
       .append("text")
       .attr("x", (width + margin.left + margin.right) / 2)
-      .attr("y", height + margin.top + 50)
+      .attr("y", height + margin.top + 100)
       .attr("text-anchor", "middle")
       .style("font-size", "12px")
       .text("Players");
