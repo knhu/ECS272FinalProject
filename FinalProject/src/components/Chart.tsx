@@ -15,6 +15,14 @@ const positionNames: Record<string, string> = {
   TE: "Tight End",
 };
 
+// Metrics for each position
+const positionMetrics: Record<string, string[]> = {
+  QB: ["pass_attempts", "complete_pass", "passing_yards", "pass_td", "interceptions"],
+  RB: ["rush_attempts", "rushing_yards", "run_td"],
+  WR: ["targets", "receptions", "receiving_yards", "reception_td"],
+  TE: ["targets", "receptions", "receiving_yards", "reception_td"],
+};
+
 const Chart: React.FC<ChartProps> = ({ selectedPlayers, position, season, week }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [selectedMetric, setSelectedMetric] = useState("fantasy_points_ppr");
@@ -193,6 +201,11 @@ const Chart: React.FC<ChartProps> = ({ selectedPlayers, position, season, week }
     bars.exit().remove();
   }, [playerData, selectedMetric, position, season, week]);
 
+  const availableMetrics = [
+    "fantasy_points_ppr",
+    ...(positionMetrics[position] || []),
+  ];
+
   if (!playerData || playerData.length === 0) {
     return <p>No data available for the selected players and filters.</p>;
   }
@@ -208,7 +221,7 @@ const Chart: React.FC<ChartProps> = ({ selectedPlayers, position, season, week }
             onChange={(e) => setSelectedMetric(e.target.value)}
             style={{ marginLeft: "10px" }}
           >
-            {["fantasy_points_ppr", ...(positionNames[position] ? [] : [])].map((metric) => (
+            {availableMetrics.map((metric) => (
               <option key={metric} value={metric}>
                 {metric.replace("_", " ").toUpperCase()}
               </option>

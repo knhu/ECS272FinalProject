@@ -18,8 +18,8 @@ const RidgelinePlot: React.FC<RidgelinePlotProps> = ({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const title =
     timeframe === "weekly"
-      ? "Weekly Fantasy Points Distribution"
-      : "Seasonal Fantasy Points Distribution";
+      ? "Average Weekly Fantasy Points Distribution"
+      : "Average Seasonal Fantasy Points Distribution";
 
   useEffect(() => {
     const margin = { top: 60, right: 30, bottom: 50, left: 110 };
